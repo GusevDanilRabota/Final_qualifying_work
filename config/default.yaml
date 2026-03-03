@@ -1,0 +1,49 @@
+line:
+  length: 0.1          # м
+  width: 0.01          # м
+  height: 0.0005       # м
+  thickness: 0.000035  # м
+  epsilon_r: 4.5
+
+defects:
+  positions: [0.02, 0.04, 0.06, 0.08]   # центры дефектов (м)
+  length: 0.01          # м
+  types: [1, 2, 3, 4]   # типы дефектов
+  type_params:
+    t1_factor: 0.7      # утонение высоты
+    W2_factor: 0.7      # утонение ширины
+    h3_factor: 0.7      # утонение подложки
+    eps4_factor: 1.3    # изменение εr
+
+probe:
+  a: 0.002              # размер головки (м)
+
+measurement:
+  frequencies:          # ГГц
+    start: 1
+    stop: 10
+    step: 1
+  snr_db: 40
+  P0: 1.0               # мощность источника
+
+scan:
+  x_start_offset: 0.5   # отступ от края в долях a (чтобы головка не выходила за край)
+  x_step: 0.001         # м
+  repeats_per_position: 10
+
+model:
+  test_size: 0.3
+  val_size_from_temp: 0.5   # доля от временной выборки для валидации
+  random_state: 42
+  rf_params:
+    n_estimators: [100, 200, 300]
+    max_depth: [10, 20, 30, null]
+    min_samples_leaf: [1, 2, 5]
+    max_features: ['sqrt', 'log2', 0.5]
+  cv_folds: 5
+
+paths:
+  data: "data/mpl_scan_data.csv"
+  model: "models/random_forest_model.pkl"
+  reports: "reports/"
+  figures: "reports/figures/"
