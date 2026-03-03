@@ -16,10 +16,7 @@ from src.classification import train_and_evaluate
 from src.visualization import (
     plot_confusion_matrix,
     plot_feature_importance,
-    plot_comparison_map,
     plot_pca,
-    plot_frequency_dependence,
-    plot_phase_frequency
 )
 from src.utils import save_report
 
@@ -71,24 +68,10 @@ def main():
 
     # PCA проекция
     pca_path = os.path.join(config['paths']['figures'], 'pca.png')
-    # Для PCA используем все данные (можно только тест, но для наглядности все)
-    plot_pca(X, y, classes,
-             colors=['lightgray', 'red', 'green', 'blue', 'orange'],
-             labels=['Нет дефекта', 'Утонение высоты', 'Утонение ширины',
-                     'Утонение подложки', 'Изменение εr'],
-             save_path=pca_path)
-
-    # Сравнительная карта для тестовых позиций
-    if 'pos_test' in result:
-        # Параметры линии из конфига
-        L_line = config['line']['length']
-        W_nom = config['line']['width']
-        # Дефекты нужно восстановить (можно сохранять в конфиге, но для простоты передадим пустые списки?
-        # Визуализация сравнения требует defects и types. В конфиге они есть, но объекты Defect не хранятся.
-        # Можно создать их заново по конфигу, но это усложнит скрипт.
-        # Упростим: не будем вызывать plot_comparison_map в скрипте, или сохраним необходимые данные.
-        # Пока пропустим, чтобы не усложнять.
-        pass
+    colors = ['lightgray', 'red', 'green', 'blue', 'orange']
+    labels = ['Нет дефекта', 'Утонение высоты', 'Утонение ширины',
+              'Утонение подложки', 'Изменение εr']
+    plot_pca(X, y, classes, colors, labels, save_path=pca_path)
 
     print("Обучение завершено. Результаты сохранены в директории reports/ и models/")
 

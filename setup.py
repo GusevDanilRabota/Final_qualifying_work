@@ -16,7 +16,7 @@ setup(
     description="Моделирование и классификация дефектов микрополосковой линии",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/microstrip-defect-classifier",
+    url="https://github.com/GusevDanilRabota/Final_qualifying_work",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     classifiers=[
