@@ -35,6 +35,9 @@ from .config import load_config, get_frequencies_hz, get_feature_names, ensure_d
 # Утилиты (сохранение отчёта)
 from .utils import save_report
 
+# Анализ гадографа
+from .defect_analysis import analyze_hodograph, analyze_from_dataframe
+
 __all__ = [
     # microstrip
     'microstrip_line_t',
@@ -65,5 +68,8 @@ __all__ = [
     'get_feature_names',
     'ensure_dirs',
     # utils
-    'save_report'
+    'save_report',
+    # defect_analysis
+    'analyze_hodograph',
+    'analyze_from_dataframe'
 ]
