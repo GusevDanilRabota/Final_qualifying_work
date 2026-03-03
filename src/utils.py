@@ -1,10 +1,12 @@
+# utils.py
 import numpy
 import datetime
 import os
 import yaml
+from typing import Dict, Any, List
 
 
-def load_config(config_path):
+def load_config(config_path: str) -> Dict[str, Any]:
     """
     Загружает конфигурацию из YAML-файла.
 
@@ -18,12 +20,19 @@ def load_config(config_path):
     dict
         Словарь с параметрами конфигурации.
     """
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Файл конфигурации не найден: {config_path}")
     with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     return config
 
 
-def save_report(result, config, feature_names, path):
+def save_report(
+    result: Dict[str, Any],
+    config: Dict[str, Any],
+    feature_names: List[str],
+    path: str
+) -> None:
     """
     Формирует текстовый отчёт о классификации и сохраняет его в файл.
 
@@ -46,13 +55,12 @@ def save_report(result, config, feature_names, path):
 
     # Параметры модели
     lines.append("\n1. ПАРАМЕТРЫ МОДЕЛИ")
-    lines.append(f"   Лучшие гиперпараметры (GridSearchCV):")
+    lines.append("   Лучшие гиперпараметры (GridSearchCV):")
     best_params = result.get('best_params', {})
     for k, v in best_params.items():
         lines.append(f"      {k}: {v}")
 
     # Размеры выборок (можно взять из конфига, но точные размеры не сохраняются в result)
-    # Поэтому просто выведем информацию из конфига
     lines.append(f"\n   Размер обучающей выборки: {config['model'].get('train_size', 'не указано')}")
     lines.append(f"   Размер тестовой выборки: {config['model'].get('test_size', 'не указано')}")
 
@@ -85,7 +93,6 @@ def save_report(result, config, feature_names, path):
     cm = result.get('confusion_matrix')
     if cm is not None:
         lines.append("\n4. МАТРИЦА ОШИБОК")
-        # Преобразуем матрицу в строку с выравниванием
         cm_str = numpy.array2string(cm, separator=', ', formatter={'int': lambda x: f'{x:3d}'})
         lines.append(cm_str)
 
@@ -99,10 +106,10 @@ def save_report(result, config, feature_names, path):
     with open(path, 'w', encoding='utf-8') as f:
         f.write(report_text)
 
-    print(f"Отчёт сохранён в {path}")
+    print(f"Отчёт сохранён в {path}")  # можно заменить на logger, но тут print уместен
 
 
-def ensure_dirs(config):
+def ensure_dirs(config: Dict[str, Any]) -> None:
     """
     Создаёт директории, указанные в конфигурации (для данных, моделей, отчётов),
     если они не существуют.

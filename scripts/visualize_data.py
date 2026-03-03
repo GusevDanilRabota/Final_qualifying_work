@@ -6,6 +6,7 @@
 import argparse
 import sys
 import os
+import logging
 import pandas as pd
 import numpy as np
 
@@ -23,23 +24,42 @@ from src.visualization import (
 from src.microstrip import microstrip_line_t, defect_t
 
 
+def setup_logging(level: str = "INFO") -> None:
+    logging.basicConfig(
+        level=getattr(logging, level),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description='Визуализация данных')
     parser.add_argument('--config', type=str, default='config/default.yaml',
                         help='Путь к файлу конфигурации YAML')
     parser.add_argument('--data', type=str, default=None,
                         help='Путь к CSV-файлу с данными (если не указан, берётся из конфига)')
+    parser.add_argument('--log-level', type=str, default='INFO',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                        help='Уровень логирования')
     args = parser.parse_args()
 
-    config = load_config(args.config)
+    setup_logging(args.log_level)
+    logger = logging.getLogger(__name__)
+
+    # Загрузка конфигурации
+    try:
+        config = load_config(args.config)
+    except Exception as e:
+        logger.error(f"Ошибка загрузки конфигурации: {e}")
+        sys.exit(1)
+
     data_path = args.data if args.data else config['paths']['data']
 
     if not os.path.exists(data_path):
-        print(f"Ошибка: файл данных {data_path} не найден.")
-        return
+        logger.error(f"Файл данных {data_path} не найден.")
+        sys.exit(1)
 
     df = pd.read_csv(data_path)
-    print(f"Загружено {len(df)} записей из {data_path}")
+    logger.info(f"Загружено {len(df)} записей из {data_path}")
 
     # Определяем доступные частоты из названий столбцов
     freqs = sorted(set([int(col.split('_')[-1].replace('GHz', ''))
@@ -51,26 +71,26 @@ def main():
               'Утонение подложки', 'Изменение εr']
 
     # Построение всех графиков
-    print("Построение годографов для частоты 5 ГГц...")
+    logger.info("Построение годографов для частоты 5 ГГц...")
     plot_hodographs(df, 5, classes, colors, labels,
                     save_path=os.path.join(config['paths']['figures'], 'hodographs.png'))
 
-    print("Построение многопанельного scatter...")
+    logger.info("Построение многопанельного scatter...")
     plot_per_frequency_scatter(df, freqs, classes, colors, labels,
                                save_path=os.path.join(config['paths']['figures'], 'per_frequency_scatter.png'))
 
-    print("PCA проекция...")
+    logger.info("PCA проекция...")
     feature_cols = [col for col in df.columns if col not in ['class', 'x_position']]
     X = df[feature_cols].values
     y = df['class'].values
     plot_pca(X, y, classes, colors, labels,
              save_path=os.path.join(config['paths']['figures'], 'pca.png'))
 
-    print("Частотная зависимость I_S...")
+    logger.info("Частотная зависимость I_S...")
     plot_frequency_dependence(df, freqs, classes, colors, labels, channel='I_S',
                               save_path=os.path.join(config['paths']['figures'], 'frequency_dependence.png'))
 
-    print("Частотная зависимость фазы Dx...")
+    logger.info("Частотная зависимость фазы Dx...")
     plot_phase_frequency(df, freqs, classes, colors, labels, channel='Dx',
                          save_path=os.path.join(config['paths']['figures'], 'phase_frequency.png'))
 
@@ -100,11 +120,12 @@ def main():
         defect_t(parent, line_params['width'], line_params['height'], line_params['thickness'], eps4, x_centers[3], L_def)
     ]
 
+    logger.info("Построение карты дефектов...")
     plot_defect_map(defects, types, line_params['length'], line_params['width'],
                     colors, labels,
                     save_path=os.path.join(config['paths']['figures'], 'defect_map.png'))
 
-    print(f"Все графики сохранены в {config['paths']['figures']}")
+    logger.info(f"Все графики сохранены в {config['paths']['figures']}")
 
 
 if __name__ == '__main__':

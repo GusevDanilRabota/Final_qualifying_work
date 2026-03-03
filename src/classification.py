@@ -1,14 +1,21 @@
+# classification.py
 import numpy
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import StratifiedKFold
+import logging
+from typing import Dict, Any, Optional, Tuple, List
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import joblib
 
+logger = logging.getLogger(__name__)
 
-def train_and_evaluate(config, X, y, positions=None):
+
+def train_and_evaluate(
+    config: Dict[str, Any],
+    X: numpy.ndarray,
+    y: numpy.ndarray,
+    positions: Optional[numpy.ndarray] = None
+) -> Dict[str, Any]:
     """
     Обучает классификатор случайного леса на данных X, y.
     Выполняет поиск гиперпараметров по сетке на обучающей выборке,
@@ -45,12 +52,20 @@ def train_and_evaluate(config, X, y, positions=None):
             - pos_test : numpy.ndarray (если positions заданы)
     """
     # Извлекаем параметры из конфига
-    test_size = config['model']['test_size']
-    val_size_from_temp = config['model']['val_size_from_temp']
-    random_state = config['model']['random_state']
-    rf_params_grid = config['model']['rf_params']
-    cv_folds = config['model']['cv_folds']
+    model_cfg = config['model']
+    test_size = model_cfg['test_size']
+    val_size_from_temp = model_cfg['val_size_from_temp']
+    random_state = model_cfg['random_state']
+    rf_params_grid = model_cfg['rf_params']
+    cv_folds = model_cfg['cv_folds']
 
+    # Проверка размеров
+    if not (0 < test_size < 1):
+        raise ValueError("test_size должно быть в интервале (0,1)")
+    if not (0 < val_size_from_temp < 1):
+        raise ValueError("val_size_from_temp должно быть в интервале (0,1)")
+
+    logger.info("Разделение данных на обучающую, валидационную и тестовую выборки")
     # Первое разделение: обучающая (70%) и временная (30%)
     X_train, X_temp, y_train, y_temp = train_test_split(
         X, y,
@@ -66,6 +81,8 @@ def train_and_evaluate(config, X, y, positions=None):
         random_state=random_state,
         stratify=y_temp
     )
+
+    logger.info(f"Размеры выборок: train={X_train.shape[0]}, val={X_val.shape[0]}, test={X_test.shape[0]}")
 
     # --- Поиск гиперпараметров на обучающей выборке ---
     rf_base = RandomForestClassifier(
@@ -88,9 +105,11 @@ def train_and_evaluate(config, X, y, positions=None):
         n_jobs=-1
     )
 
+    logger.info("Запуск GridSearchCV...")
     grid_search.fit(X_train, y_train)
 
     best_params = grid_search.best_params_
+    logger.info(f"Лучшие параметры: {best_params}")
 
     # --- Обучение финальной модели на train + val ---
     X_train_full = numpy.vstack([X_train, X_val])
@@ -112,8 +131,13 @@ def train_and_evaluate(config, X, y, positions=None):
     )
     macro_f1 = numpy.mean(f1)
 
+    logger.info(f"Accuracy на тесте: {accuracy:.4f}")
+    logger.info(f"Macro F1: {macro_f1:.4f}")
+
     # Сохраняем модель
-    joblib.dump(best_rf, config['paths']['model'])
+    model_path = config['paths']['model']
+    joblib.dump(best_rf, model_path)
+    logger.info(f"Модель сохранена в {model_path}")
 
     # Формируем результат
     result = {
@@ -147,5 +171,6 @@ def train_and_evaluate(config, X, y, positions=None):
             stratify=y_temp
         )
         result['pos_test'] = pos_test
+        logger.debug("Координаты позиций сохранены для тестовой выборки")
 
     return result

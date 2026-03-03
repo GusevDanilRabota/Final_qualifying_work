@@ -1,9 +1,11 @@
+# config.py
 import os
 import yaml
 import numpy
+from typing import Dict, Any, List
 
 
-def load_config(config_path):
+def load_config(config_path: str) -> Dict[str, Any]:
     """
     Загружает конфигурацию из YAML-файла.
 
@@ -17,12 +19,14 @@ def load_config(config_path):
     dict
         Словарь с параметрами конфигурации.
     """
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Файл конфигурации не найден: {config_path}")
     with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     return config
 
 
-def get_frequencies_hz(config):
+def get_frequencies_hz(config: Dict[str, Any]) -> numpy.ndarray:
     """
     Извлекает массив частот в Гц из конфигурации.
 
@@ -44,7 +48,7 @@ def get_frequencies_hz(config):
     return freqs_ghz * 1e9
 
 
-def get_feature_names(config):
+def get_feature_names(config: Dict[str, Any]) -> List[str]:
     """
     Генерирует имена признаков на основе конфигурации.
 
@@ -71,7 +75,7 @@ def get_feature_names(config):
     return names
 
 
-def ensure_dirs(config):
+def ensure_dirs(config: Dict[str, Any]) -> None:
     """
     Создаёт директории, указанные в разделе paths конфигурации,
     если они не существуют.

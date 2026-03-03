@@ -1,36 +1,29 @@
+# visualization.py
 import numpy
 import matplotlib.pyplot
+from typing import List, Optional, Any
 from matplotlib.patches import Rectangle, Patch
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from sklearn.tree import plot_tree
 
+# Для type hints
+import pandas
 
-def plot_defect_map(defects, types, L_line, W_nom, colors, labels,
-                    title="Карта дефектов на микрополосковой линии",
-                    save_path=None):
+
+def plot_defect_map(
+    defects: List[Any],
+    types: List[int],
+    L_line: float,
+    W_nom: float,
+    colors: List[str],
+    labels: List[str],
+    title: str = "Карта дефектов на микрополосковой линии",
+    save_path: Optional[str] = None
+) -> None:
     """
     Рисует карту дефектов: прямоугольники дефектов с подписями типов.
-
-    Параметры
-    ---------
-    defects : list
-        Список объектов Defect.
-    types : list
-        Список целочисленных меток типов (соответствует defects).
-    L_line : float
-        Длина линии (м).
-    W_nom : float
-        Номинальная ширина полоска (м).
-    colors : list
-        Список цветов для классов (индекс 0 – фон, 1..4 – дефекты).
-    labels : list
-        Список названий классов.
-    title : str
-        Заголовок графика.
-    save_path : str or None
-        Путь для сохранения изображения.
     """
     fig, ax = matplotlib.pyplot.subplots(figsize=(12, 3))
     ax.set_xlim(0, L_line * 1000)
@@ -69,27 +62,18 @@ def plot_defect_map(defects, types, L_line, W_nom, colors, labels,
     matplotlib.pyplot.show()
 
 
-def plot_hodographs(df, freq, classes, colors, labels,
-                    title=None, save_path=None):
+def plot_hodographs(
+    df: pandas.DataFrame,
+    freq: float,
+    classes: List[int],
+    colors: List[str],
+    labels: List[str],
+    title: Optional[str] = None,
+    save_path: Optional[str] = None,
+    random_state: int = 42
+) -> None:
     """
     Годографы разностного канала Dx на указанной частоте.
-
-    Параметры
-    ---------
-    df : pandas.DataFrame
-        Данные с колонками I_Dx_{freq}GHz, Q_Dx_{freq}GHz.
-    freq : int или float
-        Частота в ГГц.
-    classes : list
-        Список уникальных меток классов.
-    colors : list
-        Цвета для классов.
-    labels : list
-        Названия классов.
-    title : str or None
-        Заголовок. Если None, генерируется автоматически.
-    save_path : str or None
-        Путь для сохранения.
     """
     col_I = f'I_Dx_{freq}GHz'
     col_Q = f'Q_Dx_{freq}GHz'
@@ -99,7 +83,7 @@ def plot_hodographs(df, freq, classes, colors, labels,
     for cls, color, label in zip(classes, colors[:len(classes)], labels):
         subset = df[df['class'] == cls]
         if len(subset) > 50:
-            subset = subset.sample(50, random_state=42)
+            subset = subset.sample(50, random_state=random_state)
         I = subset[col_I].values
         Q = subset[col_Q].values
         matplotlib.pyplot.scatter(I, Q, color=color, alpha=0.6, label=label, s=30)
@@ -118,19 +102,18 @@ def plot_hodographs(df, freq, classes, colors, labels,
     matplotlib.pyplot.show()
 
 
-def plot_per_frequency_scatter(df, freqs, classes, colors, labels,
-                               title=None, save_path=None):
+def plot_per_frequency_scatter(
+    df: pandas.DataFrame,
+    freqs: List[float],
+    classes: List[int],
+    colors: List[str],
+    labels: List[str],
+    title: Optional[str] = None,
+    save_path: Optional[str] = None,
+    random_state: int = 42
+) -> None:
     """
     Многопанельный график рассеяния I-Q для всех частот (канал Dx).
-
-    Параметры
-    ---------
-    df : pandas.DataFrame
-    freqs : list
-        Список частот (ГГц).
-    classes, colors, labels : аналогично.
-    title : str
-    save_path : str
     """
     n_freqs = len(freqs)
     fig, axes = matplotlib.pyplot.subplots(2, (n_freqs + 1) // 2, figsize=(20, 8))
@@ -158,7 +141,7 @@ def plot_per_frequency_scatter(df, freqs, classes, colors, labels,
             if len(subset) == 0:
                 continue
             if len(subset) > 200:
-                subset = subset.sample(200, random_state=42)
+                subset = subset.sample(200, random_state=random_state)
             I = subset[col_I].values
             Q = subset[col_Q].values
             ax.scatter(I, Q, color=color, alpha=0.4, s=10,
@@ -193,19 +176,17 @@ def plot_per_frequency_scatter(df, freqs, classes, colors, labels,
     matplotlib.pyplot.show()
 
 
-def plot_pca(X, y, classes, colors, labels, title=None, save_path=None):
+def plot_pca(
+    X: numpy.ndarray,
+    y: numpy.ndarray,
+    classes: List[int],
+    colors: List[str],
+    labels: List[str],
+    title: Optional[str] = None,
+    save_path: Optional[str] = None
+) -> tuple:
     """
     Проекция всех признаков на первые две главные компоненты.
-
-    Параметры
-    ---------
-    X : numpy.ndarray
-        Матрица признаков (n_samples, n_features).
-    y : numpy.ndarray
-        Вектор меток.
-    classes, colors, labels : аналогично.
-    title : str
-    save_path : str
     """
     # Стандартизация
     scaler = StandardScaler()
@@ -238,21 +219,18 @@ def plot_pca(X, y, classes, colors, labels, title=None, save_path=None):
     return pca, X_pca
 
 
-def plot_frequency_dependence(df, freqs, classes, colors, labels,
-                              channel='I_S', title=None, save_path=None):
+def plot_frequency_dependence(
+    df: pandas.DataFrame,
+    freqs: List[float],
+    classes: List[int],
+    colors: List[str],
+    labels: List[str],
+    channel: str = 'I_S',
+    title: Optional[str] = None,
+    save_path: Optional[str] = None
+) -> None:
     """
-    Частотная зависимость среднего значения указанного канала (I_S по умолчанию).
-
-    Параметры
-    ---------
-    df : pandas.DataFrame
-    freqs : list
-        Частоты (ГГц).
-    classes, colors, labels : аналогично.
-    channel : str
-        Имя компоненты, например 'I_S', 'Q_Dx' и т.д.
-    title : str
-    save_path : str
+    Частотная зависимость среднего значения указанного канала.
     """
     mean_vals = {cls: [] for cls in classes}
     std_vals = {cls: [] for cls in classes}
@@ -283,20 +261,18 @@ def plot_frequency_dependence(df, freqs, classes, colors, labels,
     matplotlib.pyplot.show()
 
 
-def plot_phase_frequency(df, freqs, classes, colors, labels,
-                         channel='Dx', title=None, save_path=None):
+def plot_phase_frequency(
+    df: pandas.DataFrame,
+    freqs: List[float],
+    classes: List[int],
+    colors: List[str],
+    labels: List[str],
+    channel: str = 'Dx',
+    title: Optional[str] = None,
+    save_path: Optional[str] = None
+) -> None:
     """
     Частотная зависимость фазы комплексного сигнала разностного канала.
-
-    Параметры
-    ---------
-    df : pandas.DataFrame
-    freqs : list
-    classes, colors, labels : аналогично.
-    channel : str
-        'Dx' или 'Dy' (определяет имена колонок I_<channel>_... и Q_<channel>_...)
-    title : str
-    save_path : str
     """
     matplotlib.pyplot.figure(figsize=(10, 6))
 
@@ -323,21 +299,15 @@ def plot_phase_frequency(df, freqs, classes, colors, labels,
     matplotlib.pyplot.show()
 
 
-def plot_feature_importance(importances, feature_names, top_n=20,
-                            title=None, save_path=None):
+def plot_feature_importance(
+    importances: numpy.ndarray,
+    feature_names: List[str],
+    top_n: int = 20,
+    title: Optional[str] = None,
+    save_path: Optional[str] = None
+) -> None:
     """
     Столбчатая диаграмма важности признаков.
-
-    Параметры
-    ---------
-    importances : numpy.ndarray
-        Массив важностей (feature_importances_ из RandomForest).
-    feature_names : list
-        Список названий признаков.
-    top_n : int
-        Количество лучших признаков для отображения.
-    title : str
-    save_path : str
     """
     indices = numpy.argsort(importances)[::-1][:top_n]
     top_names = [feature_names[i] for i in indices]
@@ -356,23 +326,16 @@ def plot_feature_importance(importances, feature_names, top_n=20,
     matplotlib.pyplot.show()
 
 
-def plot_tree_fragment(model, feature_names, class_names,
-                       max_depth=3, title=None, save_path=None):
+def plot_tree_fragment(
+    model,
+    feature_names: List[str],
+    class_names: List[str],
+    max_depth: int = 3,
+    title: Optional[str] = None,
+    save_path: Optional[str] = None
+) -> None:
     """
     Визуализация фрагмента первого дерева из случайного леса.
-
-    Параметры
-    ---------
-    model : RandomForestClassifier
-        Обученная модель.
-    feature_names : list
-        Названия признаков.
-    class_names : list
-        Названия классов (например, ['Класс 0', 'Класс 1', ...]).
-    max_depth : int
-        Глубина отображаемой части дерева.
-    title : str
-    save_path : str
     """
     first_tree = model.estimators_[0]
     matplotlib.pyplot.figure(figsize=(20, 10))
@@ -388,18 +351,15 @@ def plot_tree_fragment(model, feature_names, class_names,
     matplotlib.pyplot.show()
 
 
-def plot_confusion_matrix(y_test, y_pred, classes,
-                          title='Матрица ошибок', save_path=None):
+def plot_confusion_matrix(
+    y_test: numpy.ndarray,
+    y_pred: numpy.ndarray,
+    classes: List[int],
+    title: str = 'Матрица ошибок',
+    save_path: Optional[str] = None
+) -> None:
     """
     Отображает матрицу ошибок.
-
-    Параметры
-    ---------
-    y_test, y_pred : массивы меток.
-    classes : list
-        Список уникальных меток (или названий) для отображения.
-    title : str
-    save_path : str
     """
     cm = confusion_matrix(y_test, y_pred)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
@@ -411,22 +371,20 @@ def plot_confusion_matrix(y_test, y_pred, classes,
     matplotlib.pyplot.show()
 
 
-def plot_comparison_map(y_test, y_pred, pos_test,
-                        defects, types, L_line, W_nom,
-                        colors, labels, save_path=None):
+def plot_comparison_map(
+    y_test: numpy.ndarray,
+    y_pred: numpy.ndarray,
+    pos_test: numpy.ndarray,
+    defects: List[Any],
+    types: List[int],
+    L_line: float,
+    W_nom: float,
+    colors: List[str],
+    labels: List[str],
+    save_path: Optional[str] = None
+) -> None:
     """
     Сравнение истинной и предсказанной карты дефектов для тестовых позиций.
-
-    Параметры
-    ---------
-    y_test : numpy.ndarray
-        Истинные метки для тестовых точек.
-    y_pred : numpy.ndarray
-        Предсказанные метки.
-    pos_test : numpy.ndarray
-        Координаты x для тестовых точек.
-    defects, types, L_line, W_nom, colors, labels : как в plot_defect_map.
-    save_path : str
     """
     fig, (ax1, ax2) = matplotlib.pyplot.subplots(2, 1, figsize=(12, 6), sharex=True)
 
