@@ -1,12 +1,11 @@
-# data_generation.py
 import numpy
 import pandas
 import logging
 from typing import List, Dict, Any
 from tqdm import tqdm
 
-from .microstrip import microstrip_line_t, defect_t
-from .measurement import probe_t, channel_former_t, quadrature_demodulator_t, measurement_system_t
+from src.microstrip import microstrip_line_t, defect_t
+from src.measurement import probe_t, channel_former_t, quadrature_demodulator_t, measurement_system_t
 
 logger = logging.getLogger(__name__)
 

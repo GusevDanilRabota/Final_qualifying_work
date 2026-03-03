@@ -1,7 +1,6 @@
-# classification.py
 import numpy
 import logging
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Dict, Any, Optional
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support

@@ -1,4 +1,3 @@
-# visualization.py
 import numpy
 import matplotlib.pyplot
 from typing import List, Optional, Any

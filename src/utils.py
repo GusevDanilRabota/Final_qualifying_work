@@ -1,4 +1,3 @@
-# utils.py
 import numpy
 import datetime
 import os

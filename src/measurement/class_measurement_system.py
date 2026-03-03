@@ -1,84 +1,11 @@
-# measurement.py
 import numpy
 import logging
-from typing import List, Tuple, Optional
+from typing import List
+from .class_channel_former import channel_former_t
+from .class_probe import probe_t
+from .class_quadrature_demodulator import quadrature_demodulator_t
 
 logger = logging.getLogger(__name__)
-
-
-class probe_t:
-    """
-    Измерительная головка с четырьмя электродами.
-    Электроды расположены симметрично относительно центра головки.
-    """
-    def __init__(self, a: float) -> None:
-        """
-        a – размер головки (расстояние между крайними электродами), м.
-        """
-        if a <= 0:
-            raise ValueError("Размер головки должен быть положительным")
-        self.a: float = a
-
-    def get_electrode_coords(self, xc: float) -> List[float]:
-        """
-        Возвращает координаты четырёх электродов для центра головки xc.
-        xc – координата центра головки вдоль линии (м).
-        """
-        return [xc + self.a/2, xc + self.a/2, xc - self.a/2, xc - self.a/2]
-
-
-class channel_former_t:
-    """
-    Формирует суммарный и разностные каналы из напряжений на электродах.
-    """
-    @staticmethod
-    def form_channels(V: List[complex]) -> Tuple[complex, complex, complex]:
-        """
-        Принимает список напряжений на четырёх электродах V = [v1, v2, v3, v4].
-        Возвращает кортеж (S, Dx, Dy):
-          S  = v1 + v2 + v3 + v4                     (суммарный канал)
-          Dx = (v1 + v2) - (v3 + v4)                 (разностный по x)
-          Dy = (v1 + v4) - (v3 + v2)                 (разностный по y)
-        """
-        if len(V) != 4:
-            raise ValueError("Должно быть ровно 4 напряжения")
-        v1, v2, v3, v4 = V
-        S = v1 + v2 + v3 + v4
-        Dx = (v1 + v2) - (v3 + v4)
-        Dy = (v1 + v4) - (v3 + v2)
-        return S, Dx, Dy
-
-
-class quadrature_demodulator_t:
-    """
-    Квадратурный демодулятор, выделяющий синфазную (I) и квадратурную (Q)
-    составляющие комплексного сигнала. Может добавлять шум для имитации
-    реального тракта.
-    """
-    def __init__(self, snr_db: Optional[float] = None) -> None:
-        """
-        snr_db – отношение сигнал/шум в дБ. Если None, шум не добавляется.
-        """
-        self.snr_db: Optional[float] = snr_db
-
-    def demodulate(self, complex_signal: complex) -> Tuple[float, float]:
-        """
-        Принимает комплексный сигнал, возвращает (I, Q) – вещественные значения.
-        Если задан SNR, добавляет гауссов шум к комплексному сигналу.
-        """
-        if self.snr_db is None:
-            return complex_signal.real, complex_signal.imag
-        else:
-            # Мощность сигнала (комплексная амплитуда)
-            signal_power = numpy.abs(complex_signal) ** 2
-            # Мощность шума (в единицах сигнала)
-            noise_power = signal_power / (10 ** (self.snr_db / 10))
-            noise_std = numpy.sqrt(noise_power / 2)
-            noise = noise_std * (numpy.random.randn() + 1j * numpy.random.randn())
-            noisy = complex_signal + noise
-            logger.debug(f"Добавлен шум: SNR={self.snr_db} дБ")
-            return noisy.real, noisy.imag
-
 
 class measurement_system_t:
     """
